@@ -26,4 +26,5 @@ ENV DBPASSWD=$DBPASSWD_ARG
 ENV DB=$DB_ARG
 ENV PYTHONPATH "/monitor/:/common/common/"
 
-ENTRYPOINT ["python3", "monitor/server.py"]
+#ENTRYPOINT ["python3", "monitor/server.py"]
+CMD ["tail", "-f", "/dev/null"]
