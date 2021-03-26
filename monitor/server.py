@@ -23,18 +23,17 @@ class Monitor:
 class Comment:
 
     def on_post(self, req, resp):
-        # auth, insert comment
-        pass
+        resp.status_code = falcon.HTTP_NOT_IMPLEMENTED
 
     def on_update(self, req, resp):
-        # insert comment update
-        pass
+        resp.status_code = falcon.HTTP_NOT_IMPLEMENTED
 
 
 def create():
     api = falcon.API()
     api.add_route('/', Monitor())
     api.add_route('/comment', Comment())
+    logger.info('falcon initialized')
     return api
 
 
