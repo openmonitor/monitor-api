@@ -41,7 +41,7 @@ jobs:
           build-args: |
             DBHOST_ARG=localhost
             DBPORT_ARG=${{ secrets.DB_PORT }}
-            DBUSER_ARG=${{ secrets.DB_USER }}
+            DBUSER_ARG=${{ secrets.DB_USERNAME }}
             DBPASSWD_ARG=${{ secrets.DB_PASSWD }}
             DB_ARG=${{ secrets.DB }}
           context: .
