@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import typing
@@ -13,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_monitor_data(
-    components: typing.List[model.Component],
+    component_component_frames_l: typing.List[model.ComponentComponentFrames],
     systems: typing.List[model.System],
-    component_frames: typing.List[model.ComponentFrame],
 ) -> model.DtoMonitorData:
     dto_systems: typing.List[model.DtoSystem] = []
     for s in systems:
@@ -26,28 +26,28 @@ def _parse_monitor_data(
             )
         )
 
-    dto_component_frames: typing.List[model.DtoComponentFrame] = []
-    for cf in component_frames:
-        dto_component_frames.append(
-            model.DtoComponentFrame(
-                id=cf.frame,
-                timestamp=cf.timestamp,
-                reachable=cf.reachable,
-                responseTime=cf.responseTime,
-            )
-        )
-
     dto_components: typing.List[model.DtoComponent] = []
-    for c in components:
+    for c_cfs in component_component_frames_l:
+        dto_component_frames: typing.List[model.DtoComponentFrame] = []
+        for cf in c_cfs.componentFrames:
+            dto_component_frames.append(
+                model.DtoComponentFrame(
+                    id=cf.frame,
+                    timestamp=cf.timestamp,
+                    reachable=cf.reachable,
+                    responseTime=cf.responseTime,
+                )
+            )
+
         dto_components.append(
             model.DtoComponent(
-                name=c.name,
-                frequency=c.frequency,
-                system=c.system,
-                ref=c.ref,
-                expectedTime=c.expectedTime,
-                timeout=c.timeout,
-                frames=[],
+                name=c_cfs.component.name,
+                frequency=c_cfs.component.frequency,
+                system=c_cfs.component.system,
+                ref=c_cfs.component.ref,
+                expectedTime=c_cfs.component.expectedTime,
+                timeout=c_cfs.component.timeout,
+                frames=dto_component_frames,
             )
         )
     return model.DtoMonitorData(
@@ -58,21 +58,30 @@ def _parse_monitor_data(
 
 def get_monitor_data():
     conn = database.get_connection()
-    c = database.select_components(
+    comps = database.select_components(
         conn=conn,
     )
-    s = database.select_systems(
+    sys = database.select_systems(
         conn=conn,
     )
-    cf = database.select_component_frames(
-        conn=conn,
-    )
+
+    c_cfs_l: typing.List[model.ComponentComponentFrames] = []
+    for c in comps:
+        cfs = database.select_component_frames_with_component(
+            conn=conn,
+            comp=c,
+        )
+        c_cfs_l.append(model.ComponentComponentFrames(
+            component=c,
+            componentFrames=cfs,
+        ))
     database.kill_connection(
         conn=conn,
     )
+
     data = _parse_monitor_data(
-        components=c,
-        systems=s,
-        component_frames=cf,
+        component_component_frames_l=c_cfs_l,
+        systems=sys,
     )
-    return json.dumps(data)
+
+    return json.dumps(dataclasses.asdict(data))

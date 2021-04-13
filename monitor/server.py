@@ -17,7 +17,7 @@ class Monitor:
 
     def on_get(self, req, resp):
         logger.info('GET /')
-        resp.body = controller.get_monitor_data()
+        resp.text = controller.get_monitor_data()
 
 
 class Comment:
@@ -30,7 +30,7 @@ class Comment:
 
 
 def create():
-    api = falcon.API()
+    api = falcon.App(cors_enable=True)
     api.add_route('/', Monitor())
     api.add_route('/comment', Comment())
     logger.info('falcon initialized')
