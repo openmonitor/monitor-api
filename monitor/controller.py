@@ -41,6 +41,21 @@ def _parse_monitor_data(
                 )
             )
 
+        dto_frame_comment: typing.List[model.DtoFrameComment] = []
+        conn = database.get_connection()
+        fc_l = database.select_framecomments_for_component(
+            conn=conn,
+            comp=c_cfs.component,
+        )
+        database.kill_connection(conn=conn)
+        for fc in fc_l:
+            dto_frame_comment.append(model.DtoFrameComment(
+                comment=fc.comment,
+                startFrame=fc.startFrame,
+                endFrame=fc.endFrame,
+                commentText=fc.commentText,
+            ))
+
         dto_components.append(
             model.DtoComponent(
                 name=c_cfs.component.name,
@@ -50,6 +65,7 @@ def _parse_monitor_data(
                 expectedTime=c_cfs.component.expectedTime,
                 timeout=c_cfs.component.timeout,
                 frames=dto_component_frames,
+                comments=dto_frame_comment,
             )
         )
     return model.DtoMonitorData(
