@@ -3,6 +3,8 @@ import json
 import logging
 import typing
 
+import falcon
+
 try:
     import database
     import model
@@ -87,21 +89,51 @@ def get_monitor_data():
     return json.dumps(dataclasses.asdict(data))
 
 
-def post_comment():
+def post_comment(
+    req,
+):
+
+    try:
+        body = json.loads(req.stream.read())
+    except json.decoder.JSONDecodeError:
+        return falcon.HTTP_BAD_REQUEST
+
+    if not body.get('component') or\
+            not body.get('startFrame') or \
+            not body.get('endFrame') or \
+            not body.get('comment'):
+        return falcon.HTTP_BAD_REQUEST
+
+    token: str = req.headers.get('AUTHTOKEN')
+    if not token:
+        return falcon.HTTP_BAD_REQUEST
+    if not len(token) == 32:
+        return falcon.HTTP_FORBIDDEN
+
     conn = database.get_connection()
+
     c = database.select_component(
         conn=conn,
-        component='openmonitor-static-file-server',
+        component=body['component'],
     )
+
+    if not c:
+        return falcon.HTTP_BAD_REQUEST
+
+    if token != c.authToken:
+        return falcon.HTTP_FORBIDDEN
+
     fc = model.FrameComment(
         component=c,
         comment=0,
-        startFrame=4,
-        endFrame=12,
-        commentText='Nuclear incident, please dont tell anyone!',
+        startFrame=body['startFrame'],
+        endFrame=body['endFrame'],
+        commentText=body['comment'],
     )
     database.insert_framecomment(
         conn=conn,
         fc=fc,
     )
     database.kill_connection(conn=conn)
+
+    return falcon.HTTP_CREATED

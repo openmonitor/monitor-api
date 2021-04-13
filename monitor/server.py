@@ -24,11 +24,12 @@ class Comment:
 
     def on_post(self, req, resp):
         logger.info('POST /comment')
-        controller.post_comment()
-        resp.status_code = falcon.HTTP_CREATED
+        resp.status = controller.post_comment(
+            req=req,
+        )
 
     def on_update(self, req, resp):
-        resp.status_code = falcon.HTTP_NOT_IMPLEMENTED
+        resp.status = falcon.HTTP_NOT_IMPLEMENTED
 
 
 def create():
