@@ -85,3 +85,23 @@ def get_monitor_data():
     )
 
     return json.dumps(dataclasses.asdict(data))
+
+
+def post_comment():
+    conn = database.get_connection()
+    c = database.select_component(
+        conn=conn,
+        component='openmonitor-static-file-server',
+    )
+    fc = model.FrameComment(
+        component=c,
+        comment=0,
+        startFrame=4,
+        endFrame=12,
+        commentText='Nuclear incident, please dont tell anyone!',
+    )
+    database.insert_framecomment(
+        conn=conn,
+        fc=fc,
+    )
+    database.kill_connection(conn=conn)
