@@ -39,6 +39,7 @@ def _parse_monitor_data(
                     timestamp=cf.timestamp,
                     reachable=cf.reachable,
                     responseTime=cf.responseTime,
+                    cpu=cf.cpu,
                 )
             )
 
