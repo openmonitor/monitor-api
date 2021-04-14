@@ -23,6 +23,7 @@ def _parse_monitor_data(
     for s in systems:
         dto_systems.append(
             model.DtoSystem(
+                system=s.system,
                 name=s.name,
                 ref=s.ref,
             )
