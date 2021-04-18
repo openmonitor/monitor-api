@@ -137,7 +137,7 @@ def post_comment(
     )
 
     if not c:
-        return falcon.HTTP_BAD_REQUEST
+        return falcon.HTTP_NOT_FOUND
 
     if token != c.authToken:
         return falcon.HTTP_FORBIDDEN
@@ -185,7 +185,7 @@ def update_comment(
     )
 
     if not c:
-        return falcon.HTTP_BAD_REQUEST
+        return falcon.HTTP_NOT_FOUND
 
     if token != c.authToken:
         return falcon.HTTP_FORBIDDEN
@@ -234,14 +234,23 @@ def delete_comment(
     )
 
     if not c:
-        return falcon.HTTP_BAD_REQUEST
+        return falcon.HTTP_NOT_FOUND
 
     if token != c.authToken:
         return falcon.HTTP_FORBIDDEN
 
-    database.delete_framecomment(
+    fc = database.select_framecomment_for_component_and_comment(
         conn=conn,
-        comment=body.get('commenttext'),
         comp=c,
+        comment=body.get('comment'),
     )
-    return falcon.HTTP_NO_CONTENT
+
+    if fc:
+        database.delete_framecomment(
+            conn=conn,
+            comment=body.get('comment'),
+            comp=c,
+        )
+        return falcon.HTTP_NO_CONTENT
+    else:
+        return falcon.HTTP_NOT_FOUND
