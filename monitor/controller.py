@@ -50,8 +50,8 @@ def _parse_monitor_data(
             comp=c_cfs.component,
         )
         database.kill_connection(conn=conn)
-        if fc_l:
-            for fc in fc_l:
+        for fc in fc_l:
+            if fc:
                 dto_frame_comment.append(model.DtoFrameComment(
                     comment=fc.comment,
                     startFrame=fc.startFrame,
