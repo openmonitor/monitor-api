@@ -190,9 +190,10 @@ def update_comment(
     if token != c.authToken:
         return falcon.HTTP_FORBIDDEN
 
-    fc = database.select_framecomments_for_component(
+    fc = database.select_framecomment_for_component_and_comment(
         conn=conn,
         comp=c,
+        comment=body.get('comment'),
     )
 
     if fc:
@@ -202,7 +203,9 @@ def update_comment(
             text=body.get('comment'),
             comp=c,
         )
-    return falcon.HTTP_NO_CONTENT
+        return falcon.HTTP_NO_CONTENT
+    else:
+        return falcon.HTTP_NOT_FOUND
 
 
 def delete_comment(
