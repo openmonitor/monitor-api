@@ -28,8 +28,17 @@ class Comment:
             req=req,
         )
 
-    def on_update(self, req, resp):
-        resp.status = falcon.HTTP_NOT_IMPLEMENTED
+    def on_put(self, req, resp):
+        logger.info('PUT /comment')
+        resp.status = controller.update_comment(
+            req=req,
+        )
+
+    def on_delete(self, req, resp):
+        logger.info('DELETE /comment')
+        resp.status = controller.delete_comment(
+            req=req,
+        )
 
 
 def create():

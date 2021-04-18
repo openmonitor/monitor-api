@@ -155,3 +155,89 @@ def post_comment(
     database.kill_connection(conn=conn)
 
     return falcon.HTTP_CREATED
+
+
+def update_comment(
+    req,
+):
+    try:
+        body = json.loads(req.stream.read())
+    except json.decoder.JSONDecodeError:
+        return falcon.HTTP_BAD_REQUEST
+
+    if not body.get('component') or\
+            not body.get('comment') or \
+            not body.get('commenttext'):
+        return falcon.HTTP_BAD_REQUEST
+
+    token: str = req.headers.get('AUTHTOKEN')
+    if not token:
+        return falcon.HTTP_BAD_REQUEST
+    if not len(token) == 32:
+        return falcon.HTTP_FORBIDDEN
+
+    conn = database.get_connection()
+
+    c = database.select_component(
+        conn=conn,
+        component=body['component'],
+    )
+
+    if not c:
+        return falcon.HTTP_BAD_REQUEST
+
+    if token != c.authToken:
+        return falcon.HTTP_FORBIDDEN
+
+    fc = database.select_framecomments_for_component(
+        conn=conn,
+        comp=c,
+    )
+
+    if fc:
+        database.update_framecomment(
+            conn=conn,
+            comment=body.get('commenttext'),
+            text=body.get('comment'),
+            comp=c,
+        )
+    return falcon.HTTP_NO_CONTENT
+
+
+def delete_comment(
+    req,
+):
+    try:
+        body = json.loads(req.stream.read())
+    except json.decoder.JSONDecodeError:
+        return falcon.HTTP_BAD_REQUEST
+
+    if not body.get('component') or\
+            not body.get('comment'):
+        return falcon.HTTP_BAD_REQUEST
+
+    token: str = req.headers.get('AUTHTOKEN')
+    if not token:
+        return falcon.HTTP_BAD_REQUEST
+    if not len(token) == 32:
+        return falcon.HTTP_FORBIDDEN
+
+    conn = database.get_connection()
+
+    c = database.select_component(
+        conn=conn,
+        component=body['component'],
+    )
+
+    if not c:
+        return falcon.HTTP_BAD_REQUEST
+
+    if token != c.authToken:
+        return falcon.HTTP_FORBIDDEN
+
+    database.delete_framecomment(
+        conn=conn,
+        comment=body.get('commenttext'),
+        comp=c,
+    )
+    return falcon.HTTP_NO_CONTENT
