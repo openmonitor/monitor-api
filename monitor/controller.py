@@ -199,8 +199,8 @@ def update_comment(
     if fc:
         database.update_framecomment(
             conn=conn,
-            comment=body.get('commenttext'),
-            text=body.get('comment'),
+            comment=body.get('comment'),
+            text=body.get('commenttext'),
             comp=c,
         )
         return falcon.HTTP_NO_CONTENT
