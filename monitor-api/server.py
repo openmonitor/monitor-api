@@ -32,29 +32,27 @@ class Comment:
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(__name__)
 
+    def on_get(self, req, resp):
+        self.logger.info('GET /comment')
+        raise NotImplementedError
+
     def on_post(self, req, resp):
         self.logger.info('POST /comment')
-        resp.status = controller.post_comment(
-            req=req,
-        )
+        resp.status = proxy.post_comment(req=req)
 
     def on_put(self, req, resp):
         self.logger.info('PUT /comment')
-        resp.status = controller.update_comment(
-            req=req,
-        )
+        raise NotImplementedError
 
     def on_delete(self, req, resp):
         self.logger.info('DELETE /comment')
-        resp.status = controller.delete_comment(
-            req=req,
-        )
+        raise NotImplementedError
 
 
 def create():
     api = falcon.App(cors_enable=True)
     api.add_route('/', Monitor())
-    #api.add_route('/comment', Comment())
+    api.add_route('/comment', Comment())
     logger.info('falcon initialized')
     return api
 
