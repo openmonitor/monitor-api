@@ -24,6 +24,14 @@ class ControllerComment:
         self.cache_controller = cache_controller
         self.db_ops = common.database.operations.DatabaseOperator(connection=connection)
         self.auth = auth.CommentAuthenticator(connection=connection)
+        self.observer: typing.List[observer.Observer] = []
+
+    def register_observer(
+        self,
+        observer,
+    ):
+        self.observer.append(observer)
+        self.logger.info(f'registered observer {observer.name}')
 
     def write_comment(
         self,
@@ -69,15 +77,29 @@ class ControllerComment:
         )
 
         self.db_ops.insert_comment(comment=comment)
-        self.cache_controller.update_monitor_data()
+
+        for obs in self.observer:
+            self.logger.info(f'calling observer {obs.name}')
+            obs.call_by_callable(callable=self.cache_controller.update_monitor_data)
+
         return falcon.HTTP_CREATED
 
     def delete_comment(self):
         self.logger.info('deleting comment')
-        data = self.cache_controller.delete_comment_data()
+        self.cache_controller.delete_comment_data()
+
+        for obs in self.observer:
+            self.logger.info(f'calling observer {obs.name}')
+            obs.call_by_callable(callable=self.cache_controller.update_monitor_data)
+
         return falcon.HTTP_NO_CONTENT
 
     def update_comment(self):
         self.logger.info('updating comment')
-        data = self.cache_controller.update_comment_data()
+        self.cache_controller.update_comment_data()
+
+        for obs in self.observer:
+            self.logger.info(f'calling observer {obs.name}')
+            obs.call_by_callable(callable=self.cache_controller.update_monitor_data)
+
         return falcon.HTTP_NO_CONTENT
