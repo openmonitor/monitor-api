@@ -21,7 +21,7 @@ class Monitor:
 
     def on_get(self, req, resp):
         self.logger.info('GET /')
-        resp.text = proxy.get_monitor_data()
+        resp.text = proxy.get_monitor_data(timeunit_as_string=True)
 
     def on_post(self, req, resp):
         self.logger.info('POST /')

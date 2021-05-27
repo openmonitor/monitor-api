@@ -21,8 +21,11 @@ class ControllerProxy:
             connection=conn,
         )
 
-    def get_monitor_data(self):
-        return self.monitor.get_data()
+    def get_monitor_data(
+        self,
+        timeunit_as_string: bool =False,
+    ):
+        return self.monitor.get_data(timeunit_as_string=timeunit_as_string)
 
     def post_monitor_data(self):
         self.cache.update_monitor_data()

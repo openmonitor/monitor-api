@@ -5,13 +5,13 @@ import logging
 import falcon
 
 from . import cache
+import authenticators.comment as auth
 try:
     import common.database.connection
     import common.database.operations
     import common.model as model
 except ModuleNotFoundError:
     print('common package not in python path or dependencies not installed')
-
 
 
 class ControllerComment:
@@ -22,12 +22,8 @@ class ControllerComment:
     ):
         self.logger: logging.Logger = logging.getLogger(__name__)
         self.cache_controller = cache_controller
-        self.db_ops = common.database.operations.DatabaseOperations(connection=connection)
-
-    def get_comment(self):
-        self.logger.info('getting comments')
-        data = self.cache_controller.get_comment_data()
-        return json.dumps(dataclasses.asdict(data))
+        self.db_ops = common.database.operations.DatabaseOperator(connection=connection)
+        self.auth = auth.CommentAuthenticator(connection=connection)
 
     def write_comment(
         self,
@@ -47,18 +43,21 @@ class ControllerComment:
             return falcon.HTTP_BAD_REQUEST
 
         token: str = req.headers.get('AUTHTOKEN')
-        if not token:
-            return falcon.HTTP_BAD_REQUEST
-        if not len(token) == 32:
-            return falcon.HTTP_FORBIDDEN
+        if (error := self.auth.token_error(token=token)):
+            return error
 
-        component = self.db_ops.select_component(component_id=body.get('component'))
+        component_id = body.get('component')
+        if (error := self.auth.token_component_error(
+                token=token,
+                component_id=component_id,
+        )):
+            return error
 
-        if not component:
+        if not self.db_ops.select_metric(
+                component_id=component_id,
+                metric_id=body.get('metric'),
+        ):
             return falcon.HTTP_NOT_FOUND
-
-        if token != component.authToken:
-            return falcon.HTTP_FORBIDDEN
 
         comment = model.Comment(
             metricId=body.get('metric'),
@@ -70,14 +69,15 @@ class ControllerComment:
         )
 
         self.db_ops.insert_comment(comment=comment)
+        self.cache_controller.update_monitor_data()
         return falcon.HTTP_CREATED
 
     def delete_comment(self):
         self.logger.info('deleting comment')
-        data = self.cache_controller.get_comment_data()
-        return json.dumps(dataclasses.asdict(data))
+        data = self.cache_controller.delete_comment_data()
+        return falcon.HTTP_NO_CONTENT
 
     def update_comment(self):
         self.logger.info('updating comment')
-        data = self.cache_controller.get_comment_data()
-        return json.dumps(dataclasses.asdict(data))
+        data = self.cache_controller.update_comment_data()
+        return falcon.HTTP_NO_CONTENT
