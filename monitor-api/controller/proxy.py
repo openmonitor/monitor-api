@@ -39,3 +39,9 @@ class ControllerProxy:
 
     def post_comment(self, req):
         return self.comment.write_comment(req=req)
+
+    def update_comment(self, req):
+        return self.comment.update_comment(req=req)
+
+    def delete_comment(self, req):
+        return self.comment.delete_comment(req=req)

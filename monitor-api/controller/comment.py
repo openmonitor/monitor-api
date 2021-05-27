@@ -5,6 +5,7 @@ import logging
 import falcon
 
 from . import cache
+import util
 import authenticators.comment as auth
 try:
     import common.database.connection
@@ -38,29 +39,26 @@ class ControllerComment:
         req,
     ):
         self.logger.info('writing comment')
-        try:
-            body = json.loads(req.stream.read())
-        except json.decoder.JSONDecodeError:
+        if not (body := util.load_body(req=req)):
             return falcon.HTTP_BAD_REQUEST
 
-        if not body.get('component') or \
-                not body.get('metric') or \
-                not body.get('comment') or \
-                not body.get('start') or \
-                not body.get('end'):
+        if not util.body_contains_requirements(
+            body,
+            'component',
+            'metric',
+            'comment',
+            'start',
+            'end',
+        ):
             return falcon.HTTP_BAD_REQUEST
 
-        token: str = req.headers.get('AUTHTOKEN')
-        if (error := self.auth.token_error(token=token)):
-            return error
-
-        component_id = body.get('component')
-        if (error := self.auth.token_component_error(
-                token=token,
-                component_id=component_id,
+        if (error := self.auth.authenticate(
+                token=req.headers.get('AUTHTOKEN'),
+                body=body,
         )):
             return error
 
+        component_id = body.get('component')
         if not self.db_ops.select_metric(
                 component_id=component_id,
                 metric_id=body.get('metric'),
@@ -84,19 +82,84 @@ class ControllerComment:
 
         return falcon.HTTP_CREATED
 
-    def delete_comment(self):
+    def delete_comment(
+        self,
+        req,
+    ):
         self.logger.info('deleting comment')
-        self.cache_controller.delete_comment_data()
+        if not (body := util.load_body(req=req)):
+            return falcon.HTTP_BAD_REQUEST
+
+        if not util.body_contains_requirements(
+            body,
+            'component',
+            'metric',
+            'timestamp',
+        ):
+            return falcon.HTTP_BAD_REQUEST
+
+        if (error := self.auth.authenticate(
+                token=req.headers.get('AUTHTOKEN'),
+                body=body,
+        )):
+            return error
+
+        self.db_ops.delete_comment(
+            component_id=body.get('component'),
+            metric_id=body.get('metric'),
+            timestamp=body.get('timestamp'),
+        )
 
         for obs in self.observer:
             self.logger.info(f'calling observer {obs.name}')
             obs.call_by_callable(callable=self.cache_controller.update_monitor_data)
 
-        return falcon.HTTP_NO_CONTENT
+        return falcon.HTTP_ACCEPTED
 
-    def update_comment(self):
+    def update_comment(
+        self,
+        req,
+    ):
         self.logger.info('updating comment')
-        self.cache_controller.update_comment_data()
+        if not (body := util.load_body(req=req)):
+            return falcon.HTTP_BAD_REQUEST
+
+        if not util.body_contains_requirements(
+            body,
+            'component',
+            'metric',
+            'timestamp',
+        ):
+            return falcon.HTTP_BAD_REQUEST
+
+        if (error := self.auth.authenticate(
+                token=req.headers.get('AUTHTOKEN'),
+                body=body,
+        )):
+            return error
+
+        old = self.db_ops.select_comment(
+            component_id=body.get('component'),
+            metric_id=body.get('metric'),
+            timestamp=body.get('timestamp'),
+        )
+
+        if not old:
+            return falcon.HTTP_NOT_FOUND
+
+        new: model.Comment = model.Comment(
+            metricId=body.get('metric'),
+            componentId=body.get('component'),
+            comment=body.get('comment') if body.get('comment') else old.comment,
+            timestamp=body.get('timestamp'),
+            startTimestamp=body.get('start') if body.get('start') else old.startTimestamp,
+            endTimestamp=body.get('end') if body.get('end') else old.endTimestamp,
+        )
+
+        self.db_ops.update_comment(
+            old=old,
+            new=new,
+        )
 
         for obs in self.observer:
             self.logger.info(f'calling observer {obs.name}')

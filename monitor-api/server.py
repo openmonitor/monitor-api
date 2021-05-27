@@ -32,21 +32,17 @@ class Comment:
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(__name__)
 
-    def on_get(self, req, resp):
-        self.logger.info('GET /comment')
-        raise NotImplementedError
-
     def on_post(self, req, resp):
         self.logger.info('POST /comment')
         resp.status = proxy.post_comment(req=req)
 
     def on_put(self, req, resp):
         self.logger.info('PUT /comment')
-        raise NotImplementedError
+        resp.status = proxy.update_comment(req=req)
 
     def on_delete(self, req, resp):
         self.logger.info('DELETE /comment')
-        raise NotImplementedError
+        resp.status = proxy.delete_comment(req=req)
 
 
 def create():

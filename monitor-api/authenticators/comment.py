@@ -20,7 +20,25 @@ class CommentAuthenticator:
         self.db_ops = common.database.operations.DatabaseOperator(connection=connection)
         super(CommentAuthenticator, self).__init__()
 
-    def token_error(
+    def authenticate(
+        self,
+        token: str,
+        body,
+    ) -> typing.Union[None, falcon.HTTPStatus] :
+        if (error := self._token_error(token=token)):
+            return error
+
+        component_id = body.get('component')
+
+        if (error := self._token_component_error(
+                token=token,
+                component_id=component_id,
+        )):
+            return error
+
+        return None
+
+    def _token_error(
         self,
         token: typing.Union[None, str],
     ) -> typing.Union[None, falcon.HTTPStatus] :
@@ -31,7 +49,7 @@ class CommentAuthenticator:
 
         return None
 
-    def token_component_error(
+    def _token_component_error(
         self,
         token: str,
         component_id: str,
