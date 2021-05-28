@@ -1,16 +1,16 @@
-import dataclasses
-import json
 import logging
+import typing
 
 import falcon
 
 from . import cache
-import util
+from monitor_api import util
 import authenticators.comment as auth
 try:
     import common.database.connection
     import common.database.operations
     import common.model as model
+    import common.observer as observer
 except ModuleNotFoundError:
     print('common package not in python path or dependencies not installed')
 

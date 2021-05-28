@@ -12,7 +12,7 @@ ARG DBUSER_ARG
 ARG DBPASSWD_ARG
 ARG DB_ARG
 
-ADD monitor-api /monitor-api/
+ADD monitor_api /monitor_api/
 ADD common /common/
 
 COPY requirements.txt .
@@ -26,4 +26,4 @@ ENV DBPASSWD=$DBPASSWD_ARG
 ENV DB=$DB_ARG
 ENV PYTHONPATH "/monitor-api/:/common/"
 
-ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:8012", "monitor-api.server", "--timeout", "600"]
+ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:8012", "monitor_api.server", "--timeout", "600"]
