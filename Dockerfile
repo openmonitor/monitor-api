@@ -24,6 +24,6 @@ ENV DBPORT=$DBPORT_ARG
 ENV DBUSER=$DBUSER_ARG
 ENV DBPASSWD=$DBPASSWD_ARG
 ENV DB=$DB_ARG
-ENV PYTHONPATH "/monitor-api/:/common/"
+ENV PYTHONPATH "/monitor_api/:/common/"
 
 ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:8012", "monitor_api.server", "--timeout", "600"]
